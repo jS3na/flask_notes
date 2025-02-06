@@ -1,15 +1,18 @@
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
+
+from models.user import User
 
 user_bp = Blueprint('user', __name__, template_folder='templates')
 
-@user_bp.route('/')
-def root():
-    return '<h1>bem vindo a area do user</h1>'
-
-@user_bp.before_request
-def check_logged():
-    if request.endpoint in ['auth.login', 'auth.logout']:
-        return
-
-    if 'token' not in session:
-        return redirect(url_for('auth.login'))
+@user_bp.route('/@me')
+def get_current_user():
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "Sem usuário logado"}), 401
+    
+    user = User.query.filter_by(id=user_id).first()
+    return jsonify({
+        'user_id': user.id,
+        'user_name': user.name
+    })

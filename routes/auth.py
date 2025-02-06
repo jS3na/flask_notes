@@ -1,51 +1,66 @@
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, make_response, redirect, request, session, url_for, jsonify
 from models.user import User
 from models import db
+import jwt
+import datetime
+from config import ApplicationConfig
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
 
-@auth_bp.route('/login', methods=['POST', 'GET'])
+@auth_bp.route('/login', methods=['POST'])
 def login():
-    if request.method == 'POST':
-        name = request.form['name']
-        password = request.form['password']
-
-        user = User.query.filter_by(name=name).first()
-
-        if user and user.check_password(password):
-            session['user'] = name
-            session['user_id'] = user.id
-            session['token'] = 'teste'
-            return redirect(url_for('note.root'))
-
-    return render_template('login.html')
-
-@auth_bp.route('/register', methods=['POST', 'GET'])
-def register():
-    if request.method ==  'POST':
-        name = request.form['name']
-        password = request.form['password']
-        
-        user = User(name=name)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        
-        return redirect(url_for('auth.login'))
+    data = request.json
+    name = data.get('name')
+    password = data.get('password')
     
-    return render_template('register.html')
+    user = User.query.filter_by(name=name).first()
+
+    if user and user.check_password(password):
+        response = make_response(jsonify({
+            "user_id": user.id,
+            "user_name": name
+        }))
+        
+        session["user_id"] = user.id
+        
+        token = jwt.encode(
+            {"user_id": user.id, "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
+            ApplicationConfig.SECRET_KEY,
+            algorithm="HS256"
+        )
+        # response.set_cookie('session_token', token, httponly=False, secure=False, max_age=3600)
+        return response
+    
+    return jsonify({"error": "Credenciais inválidas"}), 401
+
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    name = data.get('name')
+    password = data.get('password')
+
+    if not name or not password:
+        return jsonify({"message": "Nome e senha são obrigatórios"}), 400
+
+    existing_user = User.query.filter_by(name=name).first()
+    if existing_user:
+        return jsonify({"message": "Usuário já existe"}), 400
+        
+    user = User(name=name)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+    
+    session['user_id'] = user.id
+    
+    return jsonify({
+        "user_id": user.id,
+        "user_name": user.name
+    })
 
 @auth_bp.route('/logout')
 def logout():
-    session.clear()
-    return redirect(url_for('auth.login'))
-
-@auth_bp.before_request
-@auth_bp.before_request
-def check_logged():
-    
-    if request.endpoint in ['auth.logout']:
-        return
-    
-    if 'token' in session:
-        return redirect(url_for('user.notes'))
+    response = make_response(jsonify({"message": "Logout successful"}))
+    response.set_cookie('session_token', '', max_age=0)
+    response.set_cookie('session', '', max_age=0)
+    return response

@@ -1,19 +1,22 @@
-from flask import Flask
-
 from routes.user import user_bp
 from routes.auth import auth_bp
 from routes.note import note_bp
 
 from flask import Flask, redirect, render_template, request, url_for, session
 from flask_migrate import Migrate
-from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
+from flask_cors import CORS
+from flask_session import Session
+
+from config import ApplicationConfig
 
 from models import db
 
 app = Flask(__name__)
-app.secret_key = 'abc123'
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
+app.config.from_object(ApplicationConfig)
+
+CORS(app, supports_credentials=True)
+
+server_session = Session(app)
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -21,14 +24,6 @@ migrate = Migrate(app, db)
 @app.route('/')
 def home():
     return 'home'
-
-@app.before_request
-def check_logged():
-    if request.endpoint in ['auth.login', 'auth.logout', 'auth.register']:
-        return
-
-    if 'token' not in session:
-        return redirect(url_for('auth.login'))
 
 app.register_blueprint(user_bp, url_prefix='/user')
 app.register_blueprint(auth_bp, url_prefix='/auth')
