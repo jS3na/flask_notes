@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-import pymysql
+import psycopg2
 import redis
 
 load_dotenv()
@@ -12,7 +12,7 @@ DB_NAME = os.getenv("DB_NAME")
 
 class ApplicationConfig:
 
-    SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -20,4 +20,4 @@ class ApplicationConfig:
     SESSION_TYPE = "redis"
     SESSION_PERMANENT = False
     SESSION_USE_SIGNER = True
-    SESSION_REDIS = redis.from_url("redis://red-cui06n56l47c73f64teg:6379")
+    SESSION_REDIS = redis.from_url(os.getenv("REDIS_URL"))
