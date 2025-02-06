@@ -14,7 +14,7 @@ from models import db
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
 
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, origins=["http://localhost:3000", "https://notes-green-sigma.vercel.app"])
 
 server_session = Session(app)
 

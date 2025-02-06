@@ -55,7 +55,8 @@ def register():
 
 @auth_bp.route('/logout')
 def logout():
+    session.clear()
     response = make_response(jsonify({"message": "Logout successful"}))
-    response.set_cookie('session_token', '', max_age=0)
-    response.set_cookie('session', '', max_age=0)
+    response.set_cookie('session', '', max_age=0, httponly=True)
     return response
+
