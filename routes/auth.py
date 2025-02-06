@@ -23,12 +23,6 @@ def login():
         
         session["user_id"] = user.id
         
-        token = jwt.encode(
-            {"user_id": user.id, "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
-            ApplicationConfig.SECRET_KEY,
-            algorithm="HS256"
-        )
-        # response.set_cookie('session_token', token, httponly=False, secure=False, max_age=3600)
         return response
     
     return jsonify({"error": "Credenciais inválidas"}), 401
