@@ -16,10 +16,12 @@ app.config.from_object(ApplicationConfig)
 
 CORS(app, supports_credentials=True, origins=["http://localhost:3000", "https://notes-green-sigma.vercel.app"])
 
-server_session = Session(app)
-
 db.init_app(app)
 migrate = Migrate(app, db)
+
+app.config["SESSION_SQLALCHEMY"] = db
+
+server_session = Session(app)
 
 @app.route('/')
 def home():
@@ -30,4 +32,6 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(note_bp, url_prefix='/note')
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, port=8000)

@@ -1,11 +1,8 @@
-from flask import Blueprint, make_response, redirect, request, session, url_for, jsonify
+from flask import Blueprint, make_response, request, session, jsonify
 from models.user import User
 from models import db
-import jwt
-import datetime
-from config import ApplicationConfig
 
-auth_bp = Blueprint('auth', __name__, template_folder='templates')
+auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -16,15 +13,12 @@ def login():
     user = User.query.filter_by(name=name).first()
 
     if user and user.check_password(password):
-        response = make_response(jsonify({
+        session["user_id"] = user.id
+        return jsonify({
             "user_id": user.id,
             "user_name": name,
             "redirect": "/home"
-        }))
-        
-        session["user_id"] = user.id
-        
-        return response
+        })
     
     return jsonify({"error": "Credenciais inválidas"}), 401
 
@@ -56,7 +50,4 @@ def register():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    response = make_response(jsonify({"message": "Logout successful"}))
-    response.set_cookie('session', '', max_age=0, httponly=True)
-    return response
-
+    return jsonify({"message": "Logout successful"})
