@@ -18,7 +18,8 @@ def login():
     if user and user.check_password(password):
         response = make_response(jsonify({
             "user_id": user.id,
-            "user_name": name
+            "user_name": name,
+            "redirect": "/home"
         }))
         
         session["user_id"] = user.id
