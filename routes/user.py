@@ -16,9 +16,3 @@ def get_current_user():
         'user_id': user.id,
         'user_name': user.name
     })
-    
-@user_bp.route('/is_authenticated')
-def is_authenticated():
-    if 'user_id' in session:
-        return jsonify({"authenticated": True, "user_id": session["user_id"]})
-    return jsonify({"authenticated": False})

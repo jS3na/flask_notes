@@ -1,6 +1,10 @@
 from flask import Blueprint, make_response, request, session, jsonify
 from models.user import User
 from models import db
+import jwt
+import datetime
+from functools import wraps
+from config import ApplicationConfig
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -13,14 +17,17 @@ def login():
     user = User.query.filter_by(name=name).first()
 
     if user and user.check_password(password):
-        session["user_id"] = user.id
-        return jsonify({
+        token = jwt.encode({
             "user_id": user.id,
             "user_name": name,
-            "redirect": "/home"
-        })
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+        }, ApplicationConfig.SECRET_KEY)
+
+        response = make_response(jsonify({"success": True}))
+        response.set_cookie("token", token, httponly=True, secure=True, samesite='Strict')
+        return response
     
-    return jsonify({"error": "Credenciais inválidas"}), 401
+    return jsonify({"error": "Credenciais Inválidas"}), 401
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -29,25 +36,24 @@ def register():
     password = data.get('password')
 
     if not name or not password:
-        return jsonify({"message": "Nome e senha são obrigatórios"}), 400
+        return jsonify({"error": "Nome e senha são obrigatórios"}), 400
 
     existing_user = User.query.filter_by(name=name).first()
     if existing_user:
-        return jsonify({"message": "Usuário já existe"}), 400
+        return jsonify({"error": "Usuário já existe"}), 400
         
     user = User(name=name)
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
     
-    session['user_id'] = user.id
-    
     return jsonify({
-        "user_id": user.id,
-        "user_name": user.name
+        "success": True
     })
 
 @auth_bp.route('/logout')
 def logout():
+    response = make_response(jsonify({"message": "Logout successful"}))
+    response.delete_cookie("token")
     session.clear()
-    return jsonify({"message": "Logout successful"})
+    return response
