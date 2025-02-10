@@ -24,7 +24,7 @@ def login():
         }, ApplicationConfig.SECRET_KEY)
 
         response = make_response(jsonify({"success": True}))
-        response.set_cookie("token", token, httponly=True, secure=True, samesite='Strict')
+        response.set_cookie("token", token, httponly=True, secure=True, samesite='None')
         return response
     
     return jsonify({"error": "Credenciais Inválidas"}), 401
