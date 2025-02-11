@@ -14,7 +14,7 @@ from models import db
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
 
-CORS(app, supports_credentials=True, origins=["http://localhost:3000", "https://notes-emdo.onrender.com"])
+CORS(app, supports_credentials=True, origins=["https://devjoao-sena.shop"])
 
 db.init_app(app)
 migrate = Migrate(app, db)
